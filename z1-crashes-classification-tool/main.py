@@ -71,6 +71,7 @@ def filter_data_type(data):
         heap_overflow = re.compile(r'SUMMARY: AddressSanitizer: heap-buffer-overflow.*')
         global_overflow = re.compile(r'SUMMARY: AddressSanitizer: global-buffer-overflow.*')
         abort = re.compile(r'AddressSanitizer: nested bug in the same thread, aborting.*')
+        st = re.compile(r'SUMMARY: AddressSanitizer: stack-overflow.*')
 
         oom_match = oom.search(i)
         segv_match = segv.search(i)
@@ -79,6 +80,7 @@ def filter_data_type(data):
         heap_overflow_match = heap_overflow.search(i)
         global_overflow_match = global_overflow.search(i)
         abort_match = abort.search(i)
+        st_match = st.search(i)
 
         if oom_match:
             summary.append(oom_match.group(0))
@@ -100,6 +102,9 @@ def filter_data_type(data):
             continue
         if abort_match:
             summary.append(abort_match.group(0))
+            continue
+        if st_match:
+            summary.append(st_match.group(0))
             continue
         summary.append(i)
 
