@@ -5,26 +5,26 @@ import os
 import sys
 import subprocess
 import re
+import argparse
 
 li = lambda x : print('\x1b[01;38;5;214m' + str(x) + '\x1b[0m')
 ll = lambda x : print('\x1b[01;38;5;1m' + str(x) + '\x1b[0m')
+lg = lambda x : print('\033[32m' + str(x) + '\033[0m')
 
 crashs_id = []
 
-if len(sys.argv) < 2:
-    ll('please input program_path')
-    sys.exit(1)
-program_path = sys.argv[1]
+parser = argparse.ArgumentParser(description='Description of your program')
+parser.add_argument('-p', help='application', required=True)
+parser.add_argument('-c', help='crashes folder', required=True)
+parser.add_argument('-m', help='command')
+parser.add_argument('-o', help='save result')
+parser.add_argument('-v','--version', action='version', version='%(prog)s 1.0')
+args = parser.parse_args()
 
-if len(sys.argv) < 3:
-    ll('please input crashs_path')
-    sys.exit(1)
-crashs_path = sys.argv[2]
-
-if len(sys.argv) < 4:
-    ll('please input write_file')
-    sys.exit(1)
-write_file = sys.argv[3]
+program_path = args.p
+crashs_path = args.c
+command = args.m
+write_file = args.o
 
 asan_result = []
 summary = []
@@ -49,16 +49,23 @@ def get_crashs_id():
             if "id" in line:
                 first_line = line
                 crashs_id.append(first_line)
-
+    
     except subprocess.CalledProcessError as err:
         li(err)
 
 def get_result():
     try:
-        for i in crashs_id:
-            result = subprocess.run([program_path, crashs_path + i], capture_output=True, text=True)
-            output = result.stderr.strip()
-            asan_result.append(output)
+        if command:
+            for i in crashs_id:
+                result = subprocess.run([program_path, command, crashs_path + i], capture_output=True, text=True)
+                output = result.stderr.strip()
+                asan_result.append(output)
+        else:
+            for i in crashs_id:
+                result = subprocess.run([program_path, crashs_path + i], capture_output=True, text=True)
+                output = result.stderr.strip()
+                asan_result.append(output)
+
     except subprocess.CalledProcessError as err:
         li(error)
 
@@ -118,23 +125,22 @@ def to_integrate():
             seen_values.add(value)
 
 def show():
-    with open(write_file, 'w') as f:
-        for key, value in result_dict.items():
-            crashes_type = 'crashes_type: ' + value
-            crashes_type_result = crashes_type + '\n' + '-' * len(crashes_type)
+    for key, value in result_dict.items():
+        crashes_type = 'crashes_type: ' + value
+        crashes_type_result = crashes_type + '\n' + '-' * len(crashes_type)
 
-            crashes_id = 'crashes_id: ' + key
-            crashes_id_result = '-' * len(crashes_type) + '\n' + crashes_id + '\n'
+        crashes_id = 'crashes_id: ' + key
+        crashes_id_result = '-' * len(crashes_type) + '\n' + crashes_id + '\n'
 
-            ll(crashes_id_result)
-            li(crashes_type_result)
-            f.write(crashes_id_result)
-            f.write(crashes_type_result)
-    f.close()
+        ll(crashes_id_result)
+        li(crashes_type_result)
 
 if __name__ == '__main__':
     get_crashs_id()
+    lg('[+] Get crashes done!')
     get_result()
+    lg('[+] Get asan_result done!')
     filter_data_type(asan_result)
+    lg('[+] filter done!')
     to_integrate()
     show()
