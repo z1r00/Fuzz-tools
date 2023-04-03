@@ -79,6 +79,9 @@ def filter_data_type(data):
         global_overflow = re.compile(r'SUMMARY: AddressSanitizer: global-buffer-overflow.*')
         abort = re.compile(r'AddressSanitizer: nested bug in the same thread, aborting.*')
         st = re.compile(r'SUMMARY: AddressSanitizer: stack-overflow.*')
+        suas = re.compile(r'SUMMARY: AddressSanitizer: stack-use-after-scope.*')
+        iof = re.compile(r'SUMMARY: AddressSanitizer: initialization-order-fiasco.*')
+
 
         oom_match = oom.search(i)
         segv_match = segv.search(i)
@@ -88,6 +91,8 @@ def filter_data_type(data):
         global_overflow_match = global_overflow.search(i)
         abort_match = abort.search(i)
         st_match = st.search(i)
+        suas_match = suas.search(i)
+        iof_match = iof.search(i)
 
         if oom_match:
             summary.append(oom_match.group(0))
@@ -112,6 +117,12 @@ def filter_data_type(data):
             continue
         if st_match:
             summary.append(st_match.group(0))
+            continue
+        if suas_match:
+            summary.append(suas_match.group(0))
+            continue
+        if iof_match:
+            summary.append(iof_match.group(0))
             continue
         summary.append(i)
 
